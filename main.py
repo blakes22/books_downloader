@@ -53,24 +53,32 @@ def get_books_details(keyword, max_pages=None):
     return output_data        
 
 def download_book(link):
+    """Downloads .pdf file from given book link. 
     """
-    """
+    PATH = os.getcwd() + "/books/"
+    
     soup = BeautifulSoup(requests.get(link).text, "html.parser")
     pdf_link = soup.find("span", class_ = "download-links").a['href']
     title = soup.find("h1", class_ = "single-title").text
-    pdf_link = pdf_link.replace(" ", "%20")
-    print(pdf_link)
-    return;
-    #TODO: Check following line
-    #pdf_link = urllib.parse.quote(pdf_link, safe='')
-    if os.path.exists(os.getcwd() + '\\' + title + '.pdf'):
+
+    # Assertion for correct format of last part of the link. 
+    pdf_link = pdf_link.split("/")
+    pdf_link[-1] = urllib.parse.quote(pdf_link[-1], safe='')
+    pdf_link = "/".join(pdf_link)
+
+    try:
+        os.makedirs(PATH)
+    except OSError:
+        pass
+
+    if os.path.isfile(PATH + title + ".pdf"):
         print("File already exists:", title + ".pdf")
     else:
         print("Downloading file",  title + '.pdf...', end='')
-        urllib.request.urlretrieve(pdf_link, title + ".pdf")
+        urllib.request.urlretrieve(pdf_link, PATH + title + ".pdf")
         print("done.")
         nap = random.uniform(1,3)
-        print("Napping for", "{:3.2f}".format(nap) + "s")
+        print("Napping for {:3.2f}s".format(nap))
         time.sleep(nap)
 
 def show_books(books):
@@ -96,11 +104,11 @@ def choose_books(books):
     for id in response:
         if id in books:
             output_data[id] = books[id]
-    print("Selected {} books:".format(len(output_data)))
-    show_books(output_data)
     return output_data
+
+# TEMP
 books = get_books_details("python", 1)
-#TEMP FUNCTION
+#TEMP
 def main():
     #TODO: Add input handling here
     #response = input("What books are you looking for: ")
@@ -116,10 +124,17 @@ def main():
             chosen_books = choose_books(books)
             if not chosen_books:
                 print("byebye")
+                return
         except ValueError as e:
             print("Only numbers please.")
+        print("Selected {} book(s):".format(len(chosen_books)))
+        show_books(chosen_books)
+        for id in chosen_books:
+            download_book(books[id])
     # Check if No results found
     # Check how many pages there are found
     # Ask if you want to proceed     
-main()
+
+if __name__ == "__main__":
+    main()
 
