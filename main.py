@@ -18,8 +18,8 @@ from bs4 import BeautifulSoup
 
 def get_books_details(keyword, max_pages=False):
     """Fetches books information returning dictionary
-       conatinaing { <id>:{link,title} }
-    page: (not accessable from the menu) number of the last page
+       containing { <id>:{link,title} }
+    page: (not accessible from the menu) number of the last page
           to be considered, min 1
     keyword: <searched text> e.g 'python for beginners' """
 
@@ -48,7 +48,7 @@ def get_books_details(keyword, max_pages=False):
     else:
         max_pages = 1
 
-    # Gathernig the actual data.
+    # Gathering the actual data.
     found_books = {}
     book_id = 1
     for i in range(max_pages):
@@ -84,7 +84,7 @@ def download_book(link):
     except OSError:
         pass
 
-    # Downloads .pdf skipping already existings ones.
+    # Downloads .pdf skipping already existing ones.
     if os.path.isfile(PATH + title + ".pdf"):
         print("File already exists:", title + ".pdf")
     else:
@@ -134,7 +134,7 @@ def choose_books(books):
 def filter_books(response, books):
     """Filters books by ID chosen by a user. Ignores wrong 
        formatted input.
-    Returns 'None' if no ID was found in user reponse (wrong format),
+    Returns 'None' if no ID was found in user response (wrong format),
     otherwise returns only selected books.
     """
 
@@ -148,7 +148,7 @@ def filter_books(response, books):
             rng = v.split("-")
             rng = [int(x) for x in rng]
             if rng[0] > rng[1]:
-                rng = list(reversedsed(rng))
+                rng = list(reversed(rng))
             if rng[1] > len(books):
                 rng[1] = len(books)
             [ids.add(x) for x in range(rng[0],rng[1]+1)]
