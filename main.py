@@ -16,7 +16,7 @@ def read_links(filename):
     return data
 
 def get_books_details(keyword, max_pages=False):
-    """Fetches books information returning dictionary conatinaing pairs id:link
+    """Fetches books information returning dictionary conatinaing dict id:{link,title}
     page: number of the last page to beconsidered, min 1
     keyword: e.g. <searched text>
     """
@@ -41,17 +41,19 @@ def get_books_details(keyword, max_pages=False):
     else:
         max_pages = 1
 
-    
-    # Gathernig the actual data: id:link pairs.
+    # Gathernig the actual data.
     output_data = {}
+    test = {}
     book_id = 1
     for i in range(max_pages):
         link_page = BASE_LINK + P_ARG.format(i+1) + S_ARG + keyword
         soup = BeautifulSoup(requests.get(link_page).text, "html.parser")
         books = soup.findAll("article")
         for book in books:
-            link_book = book.find("a", href=True)["href"]# + "\n"
-            output_data[book_id] = link_book
+            entry = book.find("h2", class_="entry-title").a
+            link_book = entry["href"]
+            title = entry.text
+            output_data[book_id] = {"link":link_book, "title":title}
             book_id = book_id + 1
     return output_data        
 
@@ -88,8 +90,8 @@ def download_book(link):
 def show_books(books):
     print("ID","Title")
     for id in books:
-        title = books[id].split("/")[-2]
-        title = title.replace("-", " ").capitalize()
+        title = books[id]["title"]#.split("/")[-2]
+        #title = title.replace("-", " ").capitalize()
         print(str(id) + ".", "\"" + title + "\".")
 
 def choose_books(books):
@@ -158,7 +160,7 @@ def confirm_download(chosen_books):
         response = input("Do you want to proceed? [y/n]:")
         if response.lower() == "y":
             for id in chosen_books:
-                download_book(chosen_books[id])
+                download_book(chosen_books[id]["link"])
             return True
         elif response.lower() == "n":
             return False
