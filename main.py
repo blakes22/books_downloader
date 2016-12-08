@@ -90,8 +90,7 @@ def download_book(link):
 def show_books(books):
     print("ID","Title")
     for id in books:
-        title = books[id]["title"]#.split("/")[-2]
-        #title = title.replace("-", " ").capitalize()
+        title = books[id]["title"]
         print(str(id) + ".", "\"" + title + "\".")
 
 def choose_books(books):
