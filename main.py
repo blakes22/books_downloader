@@ -1,3 +1,13 @@
+"""
+"allitebooks downloader"
+version 1.0
+
+This script allows you to search and download(in bulk) ebooks from allitebooks.com. 
+All books that you download will be placed in ./books/ dir. 
+
+Author: BonsaiMaster
+"""
+
 import os
 import re
 import time
@@ -11,10 +21,12 @@ S_ARG = "/?s="
 P_ARG = "/page/{}"
 
 def get_books_details(keyword, max_pages=False):
-    """Fetches books information returning dictionary conatinaing dict id:{link,title}
-    page: number of the last page to beconsidered, min 1
-    keyword: e.g. <searched text>
-    """
+    """Fetches books information returning dictionary
+       conatinaing { <id>:{link,title} }
+    page: (not accessable from the menu) number of the last page
+          to be considered, min 1
+    keyword: <searched text> e.g 'python for beginners' """
+
     print("Searching for \"{}\" books...".format(keyword))
     keyword = urllib.parse.quote(keyword, safe='')
     soup = BeautifulSoup(requests.get(BASE_LINK + S_ARG + keyword).text,
@@ -53,16 +65,16 @@ def get_books_details(keyword, max_pages=False):
     return output_data        
 
 def download_book(link):
-    """Downloads .pdf file from given book link. 
-    """
+    """Downloads .pdf file from given book-page link to ./books/ dir."""
 
     PATH = os.getcwd() + "/books/"
-    
+
+    # Defines basic information.
     soup = BeautifulSoup(requests.get(link).text, "html.parser")
     pdf_link = soup.find("span", class_ = "download-links").a['href']
     title = soup.find("h1", class_ = "single-title").text
 
-    # Assertion for correct format of last part of the link. 
+    # Asserts correct format of last part of the link. 
     pdf_link = pdf_link.split("/")
     pdf_link[-1] = urllib.parse.quote(pdf_link[-1], safe='')
     pdf_link = "/".join(pdf_link)
@@ -72,7 +84,8 @@ def download_book(link):
         os.makedirs(PATH)
     except OSError:
         pass
-    
+
+    # Downloads .pdf skipping already existings ones.
     if os.path.isfile(PATH + title + ".pdf"):
         print("File already exists:", title + ".pdf")
     else:
@@ -84,6 +97,8 @@ def download_book(link):
         time.sleep(nap)
 
 def show_books(books):
+    """Displays books."""
+
     print("ID","Title")
     for id in books:
         title = books[id]["title"]
@@ -91,7 +106,7 @@ def show_books(books):
 
 def choose_books(books):
     """Handles a user choice after books were found.
-    Returns chosen_books in the same format or None if aborted."""
+    Returns selected books or 'None' if aborted."""
     
     print("""To download books provide IDs in following formats:
     '1,6,8,9' - one o more IDs separated by commas.
@@ -118,11 +133,13 @@ def choose_books(books):
                 print("No IDs recognized, try again.")
         
 def filter_books(response, books):
-    """Helper function, filters books by id given by a user.
-    Returns None if no ID was given (e.g wrong format)
-    Otherwise returns dictionary with pairs id:link of chosen books.
+    """Filters books by ID chosen by a user. Ignores wrong 
+       formatted input.
+    Returns 'None' if no ID was found in user reponse (wrong format),
+    otherwise returns only selected books.
     """
 
+    # Filters user response with regex and creates set of selected ids.
     response = response.split(",")
     ids = set()
     for v in response:
@@ -143,11 +160,10 @@ def filter_books(response, books):
     for id in ids:
         if id in books:
             output_data[id] = books[id]
-
     return output_data
 
 def confirm_download(chosen_books):
-    """Helper function, handles download confirmation."""
+    """Handles confirmation to download selected books."""
 
     print("Selected {} book(s):".format(len(chosen_books)))
     show_books(chosen_books)
@@ -161,16 +177,19 @@ def confirm_download(chosen_books):
             return False
 
 def main_loop():
+    """Menu logic"""
+
+    # Main loop with the first choice for search. 
     while True:
         response = input("What books are you looking for [blank to exit]: ")
         if not response:
             return 0
-        
         books = get_books_details(response)
         if not books:
             print("No books found.")
             continue
         else:
+            # Second loop with the books selection. 
             while True:
                 show_books(books)
                 print()
