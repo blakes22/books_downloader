@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import random
 import requests
@@ -14,12 +15,13 @@ def read_links(filename):
         data = f.read().splitlines()
     return data
 
-def get_books_details(keyword, max_pages=None):
+def get_books_details(keyword, max_pages=False):
     """Fetches books information returning dictionary conatinaing pairs id:link
     page: number of the last page to beconsidered, min 1
     keyword: e.g. <searched text>
     """
-    
+    print("Searching for \"{}\" books...".format(keyword))
+    keyword = urllib.parse.quote(keyword, safe='')
     soup = BeautifulSoup(requests.get(BASE_LINK + S_ARG + keyword).text,
                                      "html.parser")
     
@@ -38,6 +40,7 @@ def get_books_details(keyword, max_pages=None):
             max_pages = last_page
     else:
         max_pages = 1
+
     
     # Gathernig the actual data: id:link pairs.
     output_data = {}
@@ -55,6 +58,7 @@ def get_books_details(keyword, max_pages=None):
 def download_book(link):
     """Downloads .pdf file from given book link. 
     """
+
     PATH = os.getcwd() + "/books/"
     
     soup = BeautifulSoup(requests.get(link).text, "html.parser")
@@ -70,7 +74,7 @@ def download_book(link):
         os.makedirs(PATH)
     except OSError:
         pass
-
+    
     if os.path.isfile(PATH + title + ".pdf"):
         print("File already exists:", title + ".pdf")
     else:
@@ -89,52 +93,99 @@ def show_books(books):
         print(str(id) + ".", "\"" + title + "\".")
 
 def choose_books(books):
-    """Asks user to choose books IDs to download
-    Returns None if no ID was selected
+    """Handles a user choice after books were found.
+    Returns chosen_books in the same format or None if aborted."""
+    
+    print("""To download books provide IDs in following formats:
+    '1,6,8,9' - one o more IDs separated by commas.
+    '2-7,10-15' - one or more ranges of IDs.
+    '1,4,2-7,12,25,9-10' - mix of two above.
+
+    Additional options:
+    'all' - download all found books.
+    [blank] - abort.
+    """)
+    
+    while True:
+        response = input("IDs: ")
+
+        if not response:
+            return None
+        elif response.lower() == "all":
+            return books
+        else:
+            choice = filter_books(response, books)
+            if choice:
+                return choice
+            else:
+                print("No IDs recognized, try again.")
+        
+def filter_books(response, books):
+    """Helper function, filters books by id given by a user.
+    Returns None if no ID was given (e.g wrong format)
     Otherwise returns dictionary with pairs id:link of chosen books.
     """
-    
-    response = input("Choose books to download (IDs seperated by commas) | [exit]: ")
-    if not response or response.lower() == "exit":
-        return None
+
     response = response.split(",")
-    response = [abs(int(v.strip())) for v in response]
-    response = list(set(response))
+    ids = set()
+    for v in response:
+        v = v.replace(" ", "")
+        if re.match("^\d+-\d+$", v):
+            rng = v.split("-")
+            rng = [int(x) for x in rng]
+            if len(rng) == 2:
+                [ids.add(x) for x in range(rng[0],rng[1]+1)]
+        elif re.match("^\d+$", v):
+            v = int(v)
+            ids.add(v)
+
+    if not ids:
+        return None
+    
     output_data = {}
-    for id in response:
+    for id in ids:
         if id in books:
             output_data[id] = books[id]
+
     return output_data
 
-# TEMP
-books = get_books_details("python", 1)
-#TEMP
-def main():
-    #TODO: Add input handling here
-    #response = input("What books are you looking for: ")
-    #return urllib.parse.quote(response, safe='')
-    #response = get_input()
-    
-    if not books:
-        print("No books found.")
-    else:
-        show_books(books)
-        print()
-        try:
-            chosen_books = choose_books(books)
-            if not chosen_books:
-                print("byebye")
-                return
-        except ValueError as e:
-            print("Only numbers please.")
-        print("Selected {} book(s):".format(len(chosen_books)))
-        show_books(chosen_books)
-        for id in chosen_books:
-            download_book(books[id])
-    # Check if No results found
-    # Check how many pages there are found
-    # Ask if you want to proceed     
+def confirm_download(chosen_books):
+    """Helper function, handles download confirmation."""
+
+    print("Selected {} book(s):".format(len(chosen_books)))
+    show_books(chosen_books)
+    while True:
+        response = input("Do you want to proceed? [y/n]:")
+        if response.lower() == "y":
+            for id in chosen_books:
+                download_book(chosen_books[id])
+            return True
+        elif response.lower() == "n":
+            return False
+
+def main_loop():
+    while True:
+        response = input("What books are you looking for [blank to exit]: ")
+        if not response:
+            return 0
+        
+        books = get_books_details(response)
+        if not books:
+            print("No books found.")
+            continue
+        else:
+            while True:
+                show_books(books)
+                print()
+                chosen_books = choose_books(books)
+                if not chosen_books:
+                    break
+                else:
+                    confirmed = confirm_download(chosen_books)
+                    if confirmed:
+                        break
+               
 
 if __name__ == "__main__":
-    main()
+    main_loop()
 
