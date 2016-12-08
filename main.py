@@ -10,11 +10,6 @@ BASE_LINK = "http://www.allitebooks.com"
 S_ARG = "/?s="
 P_ARG = "/page/{}"
 
-def read_links(filename):
-    with open(filename, "r") as f:
-        data = f.read().splitlines()
-    return data
-
 def get_books_details(keyword, max_pages=False):
     """Fetches books information returning dictionary conatinaing dict id:{link,title}
     page: number of the last page to beconsidered, min 1
@@ -72,6 +67,7 @@ def download_book(link):
     pdf_link[-1] = urllib.parse.quote(pdf_link[-1], safe='')
     pdf_link = "/".join(pdf_link)
 
+    # Creates contener for books.
     try:
         os.makedirs(PATH)
     except OSError:
