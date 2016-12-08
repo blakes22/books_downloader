@@ -85,6 +85,7 @@ def download_book(link):
         pass
 
     # Downloads .pdf skipping already existing ones.
+    title = title.replace("/", "\\")
     if os.path.isfile(PATH + title + ".pdf"):
         print("File already exists:", title + ".pdf")
     else:
