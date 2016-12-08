@@ -49,8 +49,7 @@ def get_books_details(keyword, max_pages=False):
         max_pages = 1
 
     # Gathernig the actual data.
-    output_data = {}
-    test = {}
+    found_books = {}
     book_id = 1
     for i in range(max_pages):
         link_page = BASE_LINK + P_ARG.format(i+1) + S_ARG + keyword
@@ -60,9 +59,9 @@ def get_books_details(keyword, max_pages=False):
             entry = book.find("h2", class_="entry-title").a
             link_book = entry["href"]
             title = entry.text
-            output_data[book_id] = {"link":link_book, "title":title}
+            found_books[book_id] = {"link":link_book, "title":title}
             book_id = book_id + 1
-    return output_data        
+    return found_books        
 
 def download_book(link):
     """Downloads .pdf file from given book-page link to ./books/ dir."""
@@ -156,22 +155,22 @@ def filter_books(response, books):
     if not ids:
         return None
     
-    output_data = {}
+    selected_books = {}
     for id in ids:
         if id in books:
-            output_data[id] = books[id]
-    return output_data
+            selected_books[id] = books[id]
+    return selected_books
 
-def confirm_download(chosen_books):
+def confirm_download(selected_books):
     """Handles confirmation to download selected books."""
 
-    print("Selected {} book(s):".format(len(chosen_books)))
-    show_books(chosen_books)
+    print("Selected {} book(s):".format(len(selected_books)))
+    show_books(selected_books)
     while True:
         response = input("Do you want to proceed? [y/n]:")
         if response.lower() == "y":
-            for id in chosen_books:
-                download_book(chosen_books[id]["link"])
+            for id in selected_books:
+                download_book(selected_books[id]["link"])
             return True
         elif response.lower() == "n":
             return False
@@ -193,11 +192,11 @@ def main_loop():
             while True:
                 show_books(books)
                 print()
-                chosen_books = choose_books(books)
-                if not chosen_books:
+                selected_books = choose_books(books)
+                if not selected_books:
                     break
                 else:
-                    confirmed = confirm_download(chosen_books)
+                    confirmed = confirm_download(selected_books)
                     if confirmed:
                         break
                
