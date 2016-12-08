@@ -149,7 +149,7 @@ def filter_books(response, books):
             rng = v.split("-")
             rng = [int(x) for x in rng]
             if rng[0] > rng[1]:
-                rng = list(reversed(rng))
+                rng = rng[1], rng[0]
             if rng[1] > len(books):
                 rng[1] = len(books)
             [ids.add(x) for x in range(rng[0],rng[1]+1)]
