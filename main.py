@@ -125,9 +125,9 @@ def choose_books(books):
         elif response.lower() == "all":
             return books
         else:
-            choice = filter_books(response, books)
-            if choice:
-                return choice
+            filtered_ids = filter_books(response, books)
+            if filtered_ids:
+                return filtered_ids
             else:
                 print("No IDs recognized, try again.")
         
@@ -143,11 +143,16 @@ def filter_books(response, books):
     ids = set()
     for v in response:
         v = v.replace(" ", "")
+        # Range selection.
         if re.match("^\d+-\d+$", v):
             rng = v.split("-")
             rng = [int(x) for x in rng]
-            if len(rng) == 2:
-                [ids.add(x) for x in range(rng[0],rng[1]+1)]
+            if rng[0] > rng[1]:
+                rng = list(reversedsed(rng))
+            if rng[1] > len(books):
+                rng[1] = len(books)
+            [ids.add(x) for x in range(rng[0],rng[1]+1)]
+        # Individual IDs.
         elif re.match("^\d+$", v):
             v = int(v)
             ids.add(v)
