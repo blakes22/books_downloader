@@ -156,6 +156,7 @@ def filter_books(response, books):
         return None
     
     selected_books = {}
+    ids = sorted(list(ids))
     for id in ids:
         if id in books:
             selected_books[id] = books[id]
