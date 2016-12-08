@@ -114,13 +114,13 @@ def choose_books(books):
 
     Additional options:
     'all' - download all found books.
-    [blank] - abort.
+    'exit' or blank - abort.
     """)
     
     while True:
-        response = input("IDs: ")
+        response = input("IDs [exit]: ")
 
-        if not response:
+        if not response or response.lower() == "exit":
             return None
         elif response.lower() == "all":
             return books
@@ -167,7 +167,7 @@ def confirm_download(selected_books):
     print("Selected {} book(s):".format(len(selected_books)))
     show_books(selected_books)
     while True:
-        response = input("Do you want to proceed? [y/n]:")
+        response = input("Do you want to proceed? (y/n):")
         if response.lower() == "y":
             for id in selected_books:
                 download_book(selected_books[id]["link"])
@@ -180,8 +180,8 @@ def main_loop():
 
     # Main loop with the first choice for search. 
     while True:
-        response = input("What books are you looking for [blank to exit]: ")
-        if not response:
+        response = input("What books are you looking for? [exit]: ")
+        if not response or response.lower() == "exit":
             return 0
         books = get_books_details(response)
         if not books:
