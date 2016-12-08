@@ -16,10 +16,6 @@ import requests
 import urllib.request
 from bs4 import BeautifulSoup
 
-BASE_LINK = "http://www.allitebooks.com"
-S_ARG = "/?s="
-P_ARG = "/page/{}"
-
 def get_books_details(keyword, max_pages=False):
     """Fetches books information returning dictionary
        conatinaing { <id>:{link,title} }
@@ -27,6 +23,10 @@ def get_books_details(keyword, max_pages=False):
           to be considered, min 1
     keyword: <searched text> e.g 'python for beginners' """
 
+    BASE_LINK = "http://www.allitebooks.com"
+    S_ARG = "/?s="
+    P_ARG = "/page/{}"
+    
     print("Searching for \"{}\" books...".format(keyword))
     keyword = urllib.parse.quote(keyword, safe='')
     soup = BeautifulSoup(requests.get(BASE_LINK + S_ARG + keyword).text,
