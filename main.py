@@ -7,9 +7,6 @@ All books that you download will be placed in ./books/ dir.
 
 Author: BonsaiMaster
 """
-
-import sys
-
 import os
 import re
 import time
@@ -20,12 +17,14 @@ import urllib.request
 from bs4 import BeautifulSoup
 
 def get_books_details(keyword, max_pages=False):
-    """Fetches books information returning dictionary
-       containing { <id>:{link,title} }
-    page: (not accessible from the menu) number of the last page
+    """
+    Fetches books information returning dictionary
+     containing { <id>:{link,title} }
+    Accepts:
+    max_page: (not accessible from the menu) number of the last page
           to be considered, min 1
-    keyword: <searched text> e.g 'python for beginners' """
-
+    keyword: <searched text> e.g 'python for beginners'
+    """
     BASE_LINK = "http://www.allitebooks.com"
     S_ARG = "/?s="
     P_ARG = "/page/{}"
@@ -67,8 +66,10 @@ def get_books_details(keyword, max_pages=False):
     return found_books        
 
 def download_book(link):
-    """Downloads .pdf file from given book-page link to ./books/ dir."""
-
+    """
+    Downloads .pdf file from given book-page link.
+    Allows to specify where books should be downloaded to. 
+    """
     # Defines basic information.
     soup = BeautifulSoup(requests.get(link).text, "html.parser")
     pdf_link = soup.find("span", class_ = "download-links").a['href']
@@ -87,16 +88,17 @@ def download_book(link):
 
     # Downloads .pdf skipping already existing ones.
     if os.path.isfile(dl_path):
-        print("File already exists: {}".format(pdf_ile))
+        print("File already exists: {}".format(pdf_file))
     else:
-        print("Downloading file {}:".format(pdf_file))
+        print("Downloading file {}...".format(pdf_file))
         urllib.request.urlretrieve(pdf_link, dl_path)
         nap = random.uniform(1,3)
         print("Napping for {:3.2f}s".format(nap))
         time.sleep(nap)
         
 def make_dl_path(): 
-    """Returns either default path ./books/ or specified by a user.
+    """
+    Returns either default path ./books/ or specified by a user.
     Creates tree if dir does not exist.
     """
     DEF_PATH = os.path.abspath("books")
@@ -116,8 +118,9 @@ def make_dl_path():
                 return DEF_PATH
         
 def make_dir(path):
-    """Creates dir for a given path and handles any encountered errors. 
-    Return False if 
+    """
+    Creates dir for a given path and handles any encountered errors. 
+    Returns False if enounters error.
     """
     try:
         os.makedirs(path)
@@ -137,17 +140,20 @@ def make_dir(path):
         return False
         
 def show_books(books):
-    """Displays books."""
-
+    """
+    Displays books.
+    """
     print("ID","Title")
     for id in books:
         title = books[id]["title"]
         print(str(id) + ".", "\"" + title + "\".")
 
 def choose_books(books):
-    """Handles a user choice after books were found.
-    Returns selected books or 'None' if aborted."""
-    
+    """
+    Handles a user choice after books were found.
+    Returns selected books or 'None' if aborted.
+    """
+
     print("""To download books provide IDs in following formats:
     '1,6,8,9' - one o more IDs separated by commas.
     '2-7,10-15' - one or more ranges of IDs.
@@ -173,12 +179,12 @@ def choose_books(books):
                 print("No IDs recognized, try again.")
         
 def filter_books(response, books):
-    """Filters books by ID chosen by a user. Ignores wrong 
-       formatted input.
+    """
+    Filters books by ID chosen by a user. Ignores wrong 
+     formatted input.
     Returns 'None' if no ID was found in user response (wrong format),
     otherwise returns only selected books.
     """
-
     # Filters user response with regex and creates set of selected ids.
     response = response.split(",")
     ids = set()
@@ -209,13 +215,14 @@ def filter_books(response, books):
     return selected_books
 
 def confirm_download(selected_books):
-    """Handles confirmation to download selected books."""
-
+    """
+    Handles confirmation to download selected books.
+    """
     print("Selected {} book(s):".format(len(selected_books)))
     show_books(selected_books)
     while True:
-        response = input("Do you want to proceed? (y/n):")
-        if response.lower() == "y":
+        response = input("Do you want to proceed? ([y]/n):")
+        if response.lower() == "y" or not response:
             for id in selected_books:
                 download_book(selected_books[id]["link"])
             return True
@@ -223,8 +230,9 @@ def confirm_download(selected_books):
             return False
 
 def main_loop():
-    """Menu logic"""
-
+    """
+    Menu logic.
+    """
     # Main loop with the first choice for search. 
     while True:
         response = input("What books are you looking for? [exit]: ")
@@ -246,10 +254,7 @@ def main_loop():
                     confirmed = confirm_download(selected_books)
                     if confirmed:
                         break
-               
 
 if __name__ == "__main__":
     main_loop()
-
-
 
