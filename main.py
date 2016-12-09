@@ -8,9 +8,12 @@ All books that you download will be placed in ./books/ dir.
 Author: BonsaiMaster
 """
 
+import sys
+
 import os
 import re
 import time
+import errno
 import random
 import requests
 import urllib.request
@@ -66,8 +69,6 @@ def get_books_details(keyword, max_pages=False):
 def download_book(link):
     """Downloads .pdf file from given book-page link to ./books/ dir."""
 
-    PATH = os.getcwd() + "/books/"
-
     # Defines basic information.
     soup = BeautifulSoup(requests.get(link).text, "html.parser")
     pdf_link = soup.find("span", class_ = "download-links").a['href']
@@ -78,24 +79,63 @@ def download_book(link):
     pdf_link[-1] = urllib.parse.quote(pdf_link[-1], safe='')
     pdf_link = "/".join(pdf_link)
 
-    # Creates contener for books.
-    try:
-        os.makedirs(PATH)
-    except OSError:
-        pass
+    # Prepares full path for the download.
+    path = make_dl_path()
+    title = title.replace("/", " ").replace("\\", " ")
+    pdf_file = title + ".pdf"
+    dl_path = os.path.join(path, pdf_file)
 
     # Downloads .pdf skipping already existing ones.
-    title = title.replace("/", "\\")
-    if os.path.isfile(PATH + title + ".pdf"):
-        print("File already exists:", title + ".pdf")
+    if os.path.isfile(dl_path):
+        print("File already exists: {}".format(pdf_ile))
     else:
-        print("Downloading file",  title + '.pdf...', end='')
-        urllib.request.urlretrieve(pdf_link, PATH + title + ".pdf")
-        print("done.")
+        print("Downloading file {}:".format(pdf_file))
+        urllib.request.urlretrieve(pdf_link, dl_path)
         nap = random.uniform(1,3)
         print("Napping for {:3.2f}s".format(nap))
         time.sleep(nap)
+        
+def make_dl_path(): 
+    """Returns either default path ./books/ or specified by a user.
+    Creates tree if dir does not exist.
+    """
+    DEF_PATH = os.path.abspath("books")
 
+    print("Current download dir: {}".format(DEF_PATH))
+    while True:
+        res = input("Do you want to change download dir?(y/[n])")
+        if res.lower() == "y":
+            print("Provide either relative of absolute path.")
+            while True:
+                res = input("Dir: ")
+                path = os.path.abspath(res)
+                if make_dir(path):
+                    return path
+        elif not res or res.lower() == "n":
+            if make_dir(DEF_PATH):
+                return DEF_PATH
+        
+def make_dir(path):
+    """Creates dir for a given path and handles any encountered errors. 
+    Return False if 
+    """
+    try:
+        os.makedirs(path)
+        print("'{}' has been created and set as download dir.".format(path))
+        return True
+    except OSError as e:
+        if e.errno == errno.EINVAL:
+            print("ERROR: Invalid dir/path name.")
+        elif e.errno == errno.EEXIST:
+            if not os.path.isdir(path):
+                print("ERROR: '{}' is a file.".format(path))
+            else:
+                print("Download dir set to: {}".format(path))
+                return True
+        else:
+            print("ERROR {}".format(os.strerror(e.errno)))
+        return False
+        
 def show_books(books):
     """Displays books."""
 
@@ -210,4 +250,6 @@ def main_loop():
 
 if __name__ == "__main__":
     main_loop()
+
+
 
